@@ -3,51 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Bot</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <title>TempEdge Bot</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://api.open-meteo.com/v1/forecast"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        /* Additional styles for dark theme */
+        .city {
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid gray;
+            border-radius: 10px;
+        }
+    </style>
 </head>
-<body class="bg-blue-100 flex flex-col items-center justify-center h-screen">
-    <h1 class="text-4xl font-bold mb-4">8-Day Weather Forecast</h1>
-    <div id="weather-container" class="bg-white p-6 rounded shadow-md max-w-md w-full">
-        <select id="city-select" class="border p-2 mb-4">
-            <!-- Options for 23 US cities will be populated here -->
-        </select>
-        <button id="fetch-button" class="bg-blue-500 text-white p-2 rounded">Get Forecast</button>
-        <div id="forecast" class="mt-4"></div>
-    </div>
+<body>
+    <h1>TempEdge Bot</h1>
+    <div id="cities"></div>
     <script>
         const cities = [
-            'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix',
-            'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose',
-            'Austin', 'Jacksonville', 'Fort Worth', 'Columbus', 'San Francisco',
-            'Charlotte', 'Indianapolis', 'Seattle', 'Denver', 'Washington',
-            'Boston', 'El Paso', 'Nashville', 'Detroit'
+            { name: 'City1', lat: 12.34, lon: 56.78 },
+            { name: 'City2', lat: 23.45, lon: 67.89 },
+            //... add all 23 cities with proper coordinates
         ];
 
-        const citySelect = document.getElementById('city-select');
+        const apiKey = 'YOUR_API_KEY'; // Use your Open-Meteo API key here
+
         cities.forEach(city => {
-            const option = document.createElement('option');
-            option.value = city;
-            option.textContent = city;
-            citySelect.appendChild(option);
-        });
-
-        document.getElementById('fetch-button').addEventListener('click', function() {
-            const selectedCity = citySelect.value;
-            fetch(`https://api.open-meteo.com/v1/forecast?latitude={LATITUDE}&longitude={LONGITUDE}&daily=temperature_2m_max,temperature_2m_min&timezone=America/New_York`)
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&hourly=temperature_2m`)
                 .then(response => response.json())
-                .then(data => displayForecast(data));
+                .then(data => {
+                    const cityDiv = document.createElement('div');
+                    cityDiv.className = 'city';
+                    cityDiv.innerHTML = `<h2>${city.name}</h2><p>Temperature: ${data.hourly.temperature_2m[0]}</p>`;
+                    document.getElementById('cities').appendChild(cityDiv);
+                })
+                .catch(error => console.error('Error fetching data:', error));
         });
-
-        function displayForecast(data) {
-            const forecastDiv = document.getElementById('forecast');
-            forecastDiv.innerHTML = '';
-            const dailyData = data.daily;
-            dailyData.forEach((day, index) => {
-                forecastDiv.innerHTML += `<div class='p-2 border-b'>Day ${index + 1}: Max ${day.temperature_2m_max}°C, Min ${day.temperature_2m_min}°C</div>`;
-            });
-        }
     </script>
 </body>
 </html>
