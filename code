@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TempEdge Bot • High-Temp Predictions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3); }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+    <div class="max-w-4xl mx-auto p-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tight">🌡️ TempEdge Bot</h1>
+                <p class="text-emerald-400 text-sm">Live high-temp forecasts for Robinhood • Kalshi • Polymarket</p>
+            </div>
+            <div class="text-right">
+                <button onclick="refreshAll()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-rotate"></i> Refresh Live
+                </button>
+                <p id="last-updated" class="text-xs text-zinc-500 mt-1"></p>
+            </div>
+        </div>
+
+        <!-- City Selector -->
+        <div class="mb-6">
+            <label class="block text-sm text-zinc-400 mb-2">Select City (Robinhood/Kalshi markets)</label>
+            <select id="city-select" onchange="loadCity()" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:border-emerald-500">
+                <!-- Populated by JS -->
+            </select>
+        </div>
+
+        <!-- Forecast Grid -->
+        <div id="forecast-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Cards populated by JS -->
+        </div>
+
+        <!-- Info Bar -->
+        <div class="mt-10 text-xs text-zinc-500 border-t border-zinc-800 pt-6 flex flex-col md:flex-row gap-4 justify-between items-center">
+            <div>
+                Data: <a href="https://open-meteo.com" target="_blank" class="text-emerald-400 hover:underline">Open-Meteo</a> (best-in-class ensemble) • 
+                Resolution notes: Polymarket = WU history tab | Kalshi/Robinhood = NWS CLI
+            </div>
+            <div class="flex gap-6">
+                <a href="https://robinhood.com/us/en/prediction-markets/climate/" target="_blank" class="flex items-center gap-1 hover:text-white">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Robinhood Markets
+                </a>
+                <a href="https://kalshi.com/category/climate/daily-temperature" target="_blank" class="flex items-center gap-1 hover:text-white">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Kalshi
+                </a>
+                <a href="https://polymarket.com" target="_blank" class="flex items-center gap-1 hover:text-white">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Polymarket
+                </a>
+            </div>
+            <div>Made for accurate daily high-temp edges • April 2026</div>
+        </div>
+    </div>
+
+    <script>
+        // All Robinhood + Kalshi daily high-temp cities (lat/lon verified)
+        const cities = [
+            {name: "New York City", lat: 40.7128, lon: -74.0060},
+            {name: "Los Angeles", lat: 34.0522, lon: -118.2437},
+            {name: "Chicago", lat: 41.8781, lon: -87.6298},
+            {name: "Miami", lat: 25.7617, lon: -80.1918},
+            {name: "San Francisco", lat: 37.7749, lon: -122.4194},
+            {name: "Seattle", lat: 47.6062, lon: -122.3321},
+            {name: "Phoenix", lat: 33.4484, lon: -112.0740},
+            {name: "Las Vegas", lat: 36.1699, lon: -115.1398},
+            {name: "Denver", lat: 39.7392, lon: -104.9903},
+            {name: "Dallas", lat: 32.7767, lon: -96.7970},
+            {name: "Washington DC", lat: 38.9072, lon: -77.0369},
+            {name: "Atlanta", lat: 33.7490, lon: -84.3880},
+            {name: "Houston", lat: 29.7604, lon: -95.3698},
+            {name: "Boston", lat: 42.3601, lon: -71.0589},
+            {name: "Austin", lat: 30.2672, lon: -97.7431},
+            {name: "Philadelphia", lat: 39.9526, lon: -75.1652},
+            {name: "Minneapolis-Saint Paul", lat: 44.9778, lon: -93.2650},
+            {name: "Nashville", lat: 36.1627, lon: -86.7816},
+            {name: "San Antonio", lat: 29.4252, lon: -98.4946},
+            {name: "Jacksonville", lat: 30.3322, lon: -81.6557},
+            {name: "Charlotte", lat: 35.2271, lon: -80.8431},
+            {name: "Detroit", lat: 42.3314, lon: -83.0458},
+            {name: "Oklahoma City", lat: 35.4676, lon: -97.5164}
+        ];
+
+        let currentCity = null;
+
+        function populateCities() {
+            const select = document.getElementById("city-select");
+            cities.forEach(city => {
+                const opt = document.createElement("option");
+                opt.value = JSON.stringify(city);
+                opt.textContent = city.name;
+                select.appendChild(opt);
+            });
+            // Default to first city
+            currentCity = cities[0];
+            select.value = JSON.stringify(currentCity);
+            loadCity();
+        }
+
+        async function loadForecast(city) {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=\( {city.lat}&longitude= \){city.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto&forecast_days=8`;
+            
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                const grid = document.getElementById("forecast-grid");
+                grid.innerHTML = "";
+
+                const today = new Date();
+                
+                data.daily.time.forEach((dateStr, i) => {
+                    const high = Math.round(data.daily.temperature_2m_max[i]);
+                    const low = Math.round(data.daily.temperature_2m_min[i]);
+                    const code = data.daily.weather_code[i];
+                    
+                    const date = new Date(dateStr);
+                    const isToday = date.toDateString() === today.toDateString();
+                    
+                    // Simple weather emoji
+                    let emoji = "☀️";
+                    if (code >= 51 && code <= 67) emoji = "🌧️";
+                    else if (code >= 71 && code <= 77) emoji = "❄️";
+                    else if (code >= 95) emoji = "⛈️";
+                    else if (code === 0 || code === 1) emoji = "☀️";
+                    else emoji = "⛅";
+                    
+                    const cardHTML = `
+                    <div class="card bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-emerald-400 text-sm font-medium">${isToday ? 'TODAY' : date.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'})}</div>
+                                <div class="text-5xl font-bold mt-2">${high}°</div>
+                                <div class="text-zinc-400 text-sm">High • Low ${low}°</div>
+                            </div>
+                            <div class="text-6xl">${emoji}</div>
+                        </div>
+                        <div class="mt-6 text-xs text-zinc-500">Open-Meteo ensemble • WU/NWS aligned for market resolution</div>
+                    </div>`;
+                    
+                    grid.innerHTML += cardHTML;
+                });
+                
+                document.getElementById("last-updated").innerHTML = `Last updated: ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} CDT`;
+                
+            } catch (e) {
+                console.error(e);
+                document.getElementById("forecast-grid").innerHTML = `<div class="col-span-3 text-red-400 text-center py-12">Error loading forecast. Check internet.</div>`;
+            }
+        }
+
+        function loadCity() {
+            const select = document.getElementById("city-select");
+            currentCity = JSON.parse(select.value);
+            loadForecast(currentCity);
+        }
+
+        function refreshAll() {
+            if (currentCity) loadForecast(currentCity);
+        }
+
+        // Init
+        window.onload = populateCities;
+    </script>
+</body>
+</html>
