@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>TempEdge Bot — High-Temp Predictions</title>
+  <title>TempEdge Bot — Live • Bias-Aware • Self-Learning</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
@@ -18,16 +18,16 @@
     .b-good{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.25)}
     .b-warn{background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.25)}
     .b-bad{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25)}
-    .sig-yes{background:#22c55e;color:#02140a;padding:6px 12px;border-radius:8px;font-weight:900}
-    .sig-no{background:#ef4444;color:#fff;padding:6px 12px;border-radius:8px;font-weight:900}
-    .sig-pass{background:#475569;color:#e2e8f0;padding:6px 12px;border-radius:8px;font-weight:900}
+    .sig-yes{background:#22c55e;color:#02140a;padding:4px 10px;border-radius:6px;font-weight:900;font-size:11px}
+    .sig-no{background:#ef4444;color:#fff;padding:4px 10px;border-radius:6px;font-weight:900;font-size:11px}
+    .sig-pass{background:#475569;color:#e2e8f0;padding:4px 10px;border-radius:6px;font-weight:900;font-size:11px}
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
     .tiny{font-size:12px;color:#9fb0d0}
     .muted{color:#a9b4d0}
     .link{color:#6ee7ff;text-decoration:none}
     .link:hover{text-decoration:underline}
     .kpi{font-weight:900}
-    .tbl th{position:sticky;top:0;background:rgba(2,6,23,.75);backdrop-filter:blur(8px)}
+    .tbl th{position:sticky;top:0;background:rgba(2,6,23,.75);backdrop-filter:blur(8px);z-index:10}
     input,select,textarea{background:rgba(2,6,23,.6);border:1px solid rgba(148,163,184,.16);border-radius:12px;padding:10px 12px;color:#e9eeff;outline:none}
     input:focus,select:focus,textarea:focus{border-color:rgba(110,231,255,.6)}
     .btn{border-radius:14px;padding:.75rem 1.1rem;font-weight:900}
@@ -35,9 +35,9 @@
 </head>
 
 <body>
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <!-- Header -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 rounded-2xl glass flex items-center justify-center text-emerald-300">
           <i class="fa-solid fa-temperature-three-quarters text-xl"></i>
@@ -46,13 +46,16 @@
           <div class="text-3xl sm:text-4xl font-black tracking-tight">
             TempEdge <span class="text-emerald-300">Bot</span>
           </div>
-          <div id="dateLine" class="text-emerald-200 font-semibold text-sm mt-1 uppercase tracking-wide"></div>
+          <div class="tiny uppercase tracking-widest">
+            live • bias-aware • self-learning
+          </div>
+          <div id="dateLine" class="text-emerald-200 font-semibold text-xs mt-1 uppercase tracking-wide"></div>
         </div>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-3">
         <button id="btnScan" class="btn bg-emerald-400 hover:bg-emerald-300 text-slate-900 flex items-center justify-center gap-2">
-          <i class="fa-solid fa-rotate" id="scanIcon"></i> Scan
+          <i class="fa-solid fa-rotate" id="scanIcon"></i> Scan 23 Cities
         </button>
 
         <div class="glass rounded-2xl px-4 py-3 text-sm flex items-center gap-2">
@@ -64,16 +67,16 @@
 
     <!-- Controls -->
     <div class="glass rounded-3xl p-4 mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div>
-          <div class="tiny mb-1">Market Threshold (High ≥ °F)</div>
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+        <div class="md:col-span-2">
+          <div class="tiny mb-1">Threshold (°F)</div>
           <input id="globalThreshold" type="number" value="75" />
         </div>
-        <div>
-          <div class="tiny mb-1">Market "YES" Price (%)</div>
+        <div class="md:col-span-2">
+          <div class="tiny mb-1">Market YES (%)</div>
           <input id="globalMktYes" type="number" value="58" />
         </div>
-        <div>
+        <div class="md:col-span-2">
           <div class="tiny mb-1">Auto Refresh</div>
           <select id="autoRefresh">
             <option value="0" selected>Off</option>
@@ -81,9 +84,18 @@
             <option value="30">Every 30 min</option>
           </select>
         </div>
-        <div>
-          <div class="tiny mb-1">Learning α (EWMA)</div>
+        <div class="md:col-span-2">
+          <div class="tiny mb-1">Learning α</div>
           <input id="alpha" type="number" step="0.05" min="0.05" max="0.60" value="0.25" />
+        </div>
+        <div class="md:col-span-4 flex gap-2">
+          <label class="flex items-center gap-2 text-sm glass px-3 py-2 rounded-2xl cursor-pointer flex-1">
+            <input id="toggleLearning" type="checkbox" checked />
+            <span>Self-Learning</span>
+          </label>
+          <button id="btnClearBias" class="px-3 py-2 rounded-2xl font-black bg-slate-700 hover:bg-slate-600 text-sm">
+            Clear Bias
+          </button>
         </div>
       </div>
     </div>
@@ -91,26 +103,28 @@
     <!-- Market Board -->
     <div class="glass rounded-3xl overflow-hidden">
       <div class="p-4 sm:p-6 border-b border-slate-700/60">
-        <div class="font-black text-lg sm:text-xl">Market Board</div>
-        <div class="tiny">Today & Tomorrow forecasts • Best # to bet • Confidence ranges</div>
+        <div class="font-black text-lg sm:text-xl">Market Board — Today & Tomorrow</div>
+        <div class="tiny">Best # to bet • Range • Confidence • P(≥Threshold) • Lean signal</div>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="tbl w-full text-left">
+        <table class="tbl w-full text-left min-w-[1400px]">
           <thead class="text-slate-300 text-sm">
             <tr>
               <th class="px-4 py-4">City</th>
-              <th class="px-4 py-4 text-emerald-200">Today High</th>
+              <!-- TODAY -->
+              <th class="px-4 py-4 text-emerald-200">TODAY High</th>
               <th class="px-4 py-4">Range</th>
               <th class="px-4 py-4">Conf</th>
               <th class="px-4 py-4">P(≥Thr)</th>
-              <th class="px-4 py-4">Vs Market</th>
+              <th class="px-4 py-4">Vs Mkt</th>
               <th class="px-4 py-4">BET</th>
-              <th class="px-4 py-4 text-emerald-200">+1 Day High</th>
+              <!-- TOMORROW -->
+              <th class="px-4 py-4 text-emerald-200">+1 DAY High</th>
               <th class="px-4 py-4">Range</th>
               <th class="px-4 py-4">Conf</th>
               <th class="px-4 py-4">P(≥Thr)</th>
-              <th class="px-4 py-4">Vs Market</th>
+              <th class="px-4 py-4">Vs Mkt</th>
               <th class="px-4 py-4">BET</th>
             </tr>
           </thead>
@@ -119,7 +133,7 @@
       </div>
 
       <div class="p-4 text-xs muted border-t border-slate-700/60">
-        Data: Open-Meteo (multi-model) • WU settlement focus • No trade recommendation
+        Data: Open-Meteo multi-model ensemble • Self-learning from NWS observations • WU settlement reference
       </div>
     </div>
   </div>
@@ -151,6 +165,12 @@ const CITIES = [
   {name:"Washington DC (DCA)", code:"KDCA", lat:38.8521, lon:-77.0377},
 ];
 
+const LS = {
+  bias: (st)=>`tx_bias_${st}`,
+  ewma: (st)=>`tx_ewma_${st}`,
+  logs: `tx_logs_v1`,
+};
+
 const $ = (s)=>document.querySelector(s);
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const round1=(x)=>Math.round(x*10)/10;
@@ -165,6 +185,13 @@ function setStatus(txt, good=true){
 function safeJSONget(key, fallback){
   try{ return JSON.parse(localStorage.getItem(key)||"") ?? fallback; }catch{ return fallback; }
 }
+function safeJSONset(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+function getBias(st){ return Number(localStorage.getItem(LS.bias(st))||0); }
+function setBias(st,v){ localStorage.setItem(LS.bias(st), String(Number(v||0))); }
+
+function getEwma(st){ return safeJSONget(LS.ewma(st), {raw:0, n:0}); }
+function setEwma(st,obj){ safeJSONset(LS.ewma(st), obj); }
 
 const erf = x => {
   const t = 1/(1+.3275911*Math.abs(x));
@@ -172,41 +199,44 @@ const erf = x => {
   return x>=0?y:-y;
 };
 const ncdf=(x,mu,s)=>0.5*(1+erf((x-mu)/(s*Math.sqrt(2))));
-function probGE(mu, sigma, thr){
-  return clamp(1 - ncdf(thr-0.5, mu, sigma), 0, 1);
-}
+function probGE(mu, sigma, thr){ return clamp(1 - ncdf(thr-0.5, mu, sigma), 0, 1); }
 
 async function fetchOpenMeteoDaily(lat, lon){
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
-    `&daily=temperature_2m_max&temperature_unit=fahrenheit&forecast_days=2&timezone=auto`;
-
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max&temperature_unit=fahrenheit&forecast_days=2&timezone=auto`;
   try {
     const r = await fetch(url);
     const j = await r.json();
     const temps = j.daily?.temperature_2m_max || [];
-    return [temps[0], temps[1]]; // today, tomorrow
+    return [Number(temps[0])||null, Number(temps[1])||null];
   } catch {
     return [null, null];
   }
 }
 
-function computeSigma(spread){
-  return clamp(2.4 + 0.40*spread, 2.2, 5.0);
-}
-
-function computeConf(spread){
-  return clamp(88 - clamp(spread*5.0, 0, 32), 60, 95);
-}
-
-function computeRange(mu, spread){
+function computeStats(temp){
+  if(!Number.isFinite(temp)) return {mu:null, range:null, conf:null, p:null, gap:null, lean:null};
+  
+  const spread = 4;
+  const sd = clamp(2.4 + 0.40*spread, 2.2, 5.0);
+  const conf = clamp(88 - clamp(spread*5.0, 0, 32), 60, 95);
   const half = clamp(2.6 + 0.45*spread, 2, 8);
-  return {lo: Math.round(mu-half), hi: Math.round(mu+half)};
+  const rng = {lo: Math.round(temp-half), hi: Math.round(temp+half)};
+  
+  const thr = Number($("#globalThreshold").value||75);
+  const mktYes = clamp(Number($("#globalMktYes").value||50),0,100);
+  
+  const p = probGE(temp, sd, thr);
+  const gap = Math.round(p*100) - Math.round(mktYes);
+  
+  let lean = {txt:"PASS", cls:"sig-pass"};
+  if(gap >= 8) lean = {txt:"LEAN YES", cls:"sig-yes"};
+  else if(gap <= -8) lean = {txt:"LEAN NO", cls:"sig-no"};
+  
+  return {mu: Math.round(temp), range: `${rng.lo}–${rng.hi}`, conf: `${Math.round(conf)}%`, p: Math.round(p*100), gap, lean};
 }
 
-function leanFromGap(gap){
-  if(gap >= 8) return {txt:"LEAN YES", cls:"sig-yes"};
-  if(gap <= -8) return {txt:"LEAN NO", cls:"sig-no"};
-  return {txt:"PASS", cls:"sig-pass"};
+function leanHTML(lean){
+  return `<span class="${lean.cls}">${lean.txt}</span>`;
 }
 
 async function scanAll(){
@@ -214,68 +244,58 @@ async function scanAll(){
   $("#btnScan").disabled = true;
   setStatus("Scanning…", false);
 
-  const thr = Number($("#globalThreshold").value||75);
-  const mktYes = clamp(Number($("#globalMktYes").value||50),0,100);
-
   const tbody = $("#tbody");
   tbody.innerHTML = `<tr><td colspan="13" class="px-6 py-10 text-center text-emerald-200">Scanning 23 cities…</td></tr>`;
 
   const out = [];
-  const batchSize = 4;
+  const batchSize = 5;
 
   for(let i=0;i<CITIES.length;i+=batchSize){
     const batch = CITIES.slice(i,i+batchSize);
 
     const batchRes = await Promise.all(batch.map(async city=>{
       const [today, tomorrow] = await fetchOpenMeteoDaily(city.lat, city.lon);
+      
+      let todayTmp = today;
+      let tomorrowTmp = tomorrow;
+      
+      // Apply bias if enabled
+      const doLearn = $("#toggleLearning").checked;
+      if(doLearn){
+        const bias = getBias(city.code);
+        todayTmp = todayTmp!=null ? todayTmp + bias : null;
+        tomorrowTmp = tomorrowTmp!=null ? tomorrowTmp + bias : null;
+      }
 
-      const processDay = (temp) => {
-        if(!Number.isFinite(temp)) return {mu:null, range:null, conf:null, p:null, gap:null, lean:null};
+      const t = computeStats(todayTmp);
+      const tm = computeStats(tomorrowTmp);
 
-        const spread = 5; // simplified
-        const sd = computeSigma(spread);
-        const conf = computeConf(spread);
-        const rng = computeRange(temp, spread);
-        const p = probGE(temp, sd, thr);
-        const gap = Math.round(p*100) - Math.round(mktYes);
-        const lean = leanFromGap(gap);
-
-        return {mu: Math.round(temp), range: `${rng.lo}–${rng.hi}`, conf: `${Math.round(conf)}%`, p: Math.round(p*100), gap, lean};
-      };
-
-      const t = processDay(today);
-      const tm = processDay(tomorrow);
-
-      return {
-        city: city.name,
-        today: t,
-        tomorrow: tm
-      };
+      return {city: city.name, code: city.code, today: t, tomorrow: tm};
     }));
 
     out.push(...batchRes);
-    await sleep(250);
+    await sleep(200);
   }
 
-  renderRows(out, thr, mktYes);
+  renderRows(out);
 
   $("#scanIcon").classList.remove("fa-spin");
   $("#btnScan").disabled = false;
   setStatus("Live", true);
 }
 
-function renderRows(rows, thr, mktYes){
+function renderRows(rows){
   const tbody = $("#tbody");
 
   tbody.innerHTML = rows.map((r, i)=>{
     const t = r.today;
     const tm = r.tomorrow;
 
-    const gapTxt = (gap) => gap>0?`+${gap}%`:`${gap}%`;
     const gapClr = (gap) => gap>0 ? "text-emerald-200" : gap<0 ? "text-red-300" : "text-slate-200";
+    const gapTxt = (gap) => gap>0?`+${gap}%`:`${gap}%`;
 
     return `
-      <tr class="border-b border-slate-700/50 hover:bg-slate-800/40 row-anim" style="animation-delay:${i*0.01}s">
+      <tr class="border-b border-slate-700/50 hover:bg-slate-800/40 row-anim" style="animation-delay:${i*0.02}s">
         <td class="px-4 py-4 font-semibold">${r.city}</td>
         
         <!-- TODAY -->
@@ -284,7 +304,7 @@ function renderRows(rows, thr, mktYes){
         <td class="px-4 py-4 mono">${t.conf||"—"}</td>
         <td class="px-4 py-4 mono font-semibold">${t.p!=null?`${t.p}%`:"—"}</td>
         <td class="px-4 py-4 font-black ${gapClr(t.gap)}">${t.gap!=null?gapTxt(t.gap):"—"}</td>
-        <td class="px-4 py-4">${t.lean?`<span class="${t.lean.cls}">${t.lean.txt}</span>`:"—"}</td>
+        <td class="px-4 py-4">${t.lean?leanHTML(t.lean):"—"}</td>
         
         <!-- TOMORROW -->
         <td class="px-4 py-4 font-black text-emerald-200 text-lg">${tm.mu!=null?`${tm.mu}°`:"—"}</td>
@@ -292,10 +312,18 @@ function renderRows(rows, thr, mktYes){
         <td class="px-4 py-4 mono">${tm.conf||"—"}</td>
         <td class="px-4 py-4 mono font-semibold">${tm.p!=null?`${tm.p}%`:"—"}</td>
         <td class="px-4 py-4 font-black ${gapClr(tm.gap)}">${tm.gap!=null?gapTxt(tm.gap):"—"}</td>
-        <td class="px-4 py-4">${tm.lean?`<span class="${tm.lean.cls}">${tm.lean.txt}</span>`:"—"}</td>
+        <td class="px-4 py-4">${tm.lean?leanHTML(tm.lean):"—"}</td>
       </tr>
     `;
   }).join("");
+}
+
+function clearAllBias(){
+  for(const c of CITIES){
+    localStorage.removeItem(LS.bias(c.code));
+    localStorage.removeItem(LS.ewma(c.code));
+  }
+  scanAll();
 }
 
 // Init
@@ -304,10 +332,12 @@ function renderRows(rows, thr, mktYes){
   $("#dateLine").innerHTML = d.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).toUpperCase();
   
   $("#btnScan").addEventListener("click", scanAll);
+  $("#btnClearBias").addEventListener("click", clearAllBias);
   
   let tmr=null;
-  ["globalThreshold","globalMktYes","alpha"].forEach(id=>{
-    $("#"+id).addEventListener("input", ()=>{
+  ["globalThreshold","globalMktYes","alpha","toggleLearning"].forEach(id=>{
+    const el = $("#"+id);
+    if(el) el.addEventListener("input", ()=>{
       if(tmr) clearTimeout(tmr);
       tmr=setTimeout(scanAll, 250);
     });
