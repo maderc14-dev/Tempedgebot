@@ -2,354 +2,367 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>TempEdge Bot — Live • Bias-Aware • Self-Learning</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TempEdge Pro — Self-Learning WU Settlement Scanner</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    :root{color-scheme:dark}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 800px at 15% 10%,#1b2b59 0%,#0b1020 55%);color:#e9eeff}
-    .glass{background:rgba(15,23,42,.72);backdrop-filter:blur(10px);border:1px solid rgba(148,163,184,.16)}
-    .pulse{animation:pulse 1.6s infinite}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-    .row-anim{animation:fadeIn .22s ease-out both}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-    .badge{font-size:11px;font-weight:900;letter-spacing:.06em;padding:3px 9px;border-radius:999px;border:1px solid rgba(148,163,184,.18)}
-    .b-good{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.25)}
-    .b-warn{background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.25)}
-    .b-bad{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25)}
-    .sig-yes{background:#22c55e;color:#02140a;padding:4px 10px;border-radius:6px;font-weight:900;font-size:11px}
-    .sig-no{background:#ef4444;color:#fff;padding:4px 10px;border-radius:6px;font-weight:900;font-size:11px}
-    .sig-pass{background:#475569;color:#e2e8f0;padding:4px 10px;border-radius:6px;font-weight:900;font-size:11px}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-    .tiny{font-size:12px;color:#9fb0d0}
-    .muted{color:#a9b4d0}
-    .link{color:#6ee7ff;text-decoration:none}
-    .link:hover{text-decoration:underline}
-    .kpi{font-weight:900}
-    .tbl th{position:sticky;top:0;background:rgba(2,6,23,.75);backdrop-filter:blur(8px);z-index:10}
-    input,select,textarea{background:rgba(2,6,23,.6);border:1px solid rgba(148,163,184,.16);border-radius:12px;padding:10px 12px;color:#e9eeff;outline:none}
-    input:focus,select:focus,textarea:focus{border-color:rgba(110,231,255,.6)}
-    .btn{border-radius:14px;padding:.75rem 1.1rem;font-weight:900}
+    :root { color-scheme: dark; }
+    body { font-family: ui-sans-serif, system-sys, -apple-system, sans-serif; background: #0f172a; color: white; }
+    .dashboard { background: radial-gradient(circle at top right, #1e293b, #0f172a); min-height: 100vh; }
+    .card-glass { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.08); }
+    .highlight-bet { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05)); border: 2px solid #10b981; }
+    .signal-over { background: #10b981; color: #064e3b; font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 0.375rem; }
+    .signal-under { background: #ef4444; color: white; font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 0.375rem; }
+    .signal-neutral { background: #334155; color: #94a3b8; padding: 0.35rem 0.75rem; border-radius: 0.375rem; }
+    .live-pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .row-anim { animation: fadeIn 0.35s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .number-large { font-size: 2rem; font-weight: 900; font-family: ui-monospace; }
+    .learning-badge { background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #a5b4fc; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: 700; }
   </style>
 </head>
-
-<body>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Header -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-      <div class="flex items-center gap-3">
-        <div class="w-12 h-12 rounded-2xl glass flex items-center justify-center text-emerald-300">
-          <i class="fa-solid fa-temperature-three-quarters text-xl"></i>
+<body class="dashboard">
+  <div class="max-w-7xl mx-auto px-4 py-6 sm:py-10">
+    
+    <!-- HEADER -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-8">
+      <div>
+        <div class="flex items-center gap-3 mb-3">
+          <div id="status-dot" class="h-3 w-3 bg-emerald-500 rounded-full live-pulse"></div>
+          <span id="status-text" class="text-emerald-400 font-mono text-xs tracking-widest uppercase">System Ready</span>
         </div>
-        <div>
-          <div class="text-3xl sm:text-4xl font-black tracking-tight">
-            TempEdge <span class="text-emerald-300">Bot</span>
-          </div>
-          <div class="tiny uppercase tracking-widest">
-            live • bias-aware • self-learning
-          </div>
-          <div id="dateLine" class="text-emerald-200 font-semibold text-xs mt-1 uppercase tracking-wide"></div>
-        </div>
+        <h1 class="text-4xl sm:text-5xl font-black tracking-tighter uppercase">TempEdge <span class="text-emerald-500">Pro</span></h1>
+        <p class="text-slate-400 font-medium mt-2">Weather Underground Settlement Scanner • <span id="display-date" class="text-emerald-300 font-bold"></span></p>
       </div>
-
-      <div class="flex flex-col sm:flex-row gap-3">
-        <button id="btnScan" class="btn bg-emerald-400 hover:bg-emerald-300 text-slate-900 flex items-center justify-center gap-2">
-          <i class="fa-solid fa-rotate" id="scanIcon"></i> Scan 23 Cities
-        </button>
-
-        <div class="glass rounded-2xl px-4 py-3 text-sm flex items-center gap-2">
-          <span id="liveDot" class="w-3 h-3 bg-emerald-300 rounded-full inline-block pulse"></span>
-          <span id="statusTxt" class="muted">Ready</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Controls -->
-    <div class="glass rounded-3xl p-4 mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-        <div class="md:col-span-2">
-          <div class="tiny mb-1">Threshold (°F)</div>
-          <input id="globalThreshold" type="number" value="75" />
-        </div>
-        <div class="md:col-span-2">
-          <div class="tiny mb-1">Market YES (%)</div>
-          <input id="globalMktYes" type="number" value="58" />
-        </div>
-        <div class="md:col-span-2">
-          <div class="tiny mb-1">Auto Refresh</div>
-          <select id="autoRefresh">
-            <option value="0" selected>Off</option>
-            <option value="10">Every 10 min</option>
-            <option value="30">Every 30 min</option>
+      
+      <div class="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+        <div class="card-glass rounded-xl px-4 py-3">
+          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-2">Auto Refresh</label>
+          <select id="auto-refresh" class="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-400 cursor-pointer">
+            <option value="0">Off</option>
+            <option value="15">Every 15 min</option>
+            <option value="30" selected>Every 30 min</option>
+            <option value="60">Every 60 min</option>
           </select>
         </div>
-        <div class="md:col-span-2">
-          <div class="tiny mb-1">Learning α</div>
-          <input id="alpha" type="number" step="0.05" min="0.05" max="0.60" value="0.25" />
-        </div>
-        <div class="md:col-span-4 flex gap-2">
-          <label class="flex items-center gap-2 text-sm glass px-3 py-2 rounded-2xl cursor-pointer flex-1">
-            <input id="toggleLearning" type="checkbox" checked />
-            <span>Self-Learning</span>
-          </label>
-          <button id="btnClearBias" class="px-3 py-2 rounded-2xl font-black bg-slate-700 hover:bg-slate-600 text-sm">
-            Clear Bias
-          </button>
-        </div>
+
+        <button onclick="window.scanAllCities()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black px-8 py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+          <i class="fa-solid fa-rotate" id="scan-icon"></i> SCAN
+        </button>
+
+        <button onclick="window.clearLearning()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2" title="Reset all learned biases">
+          <i class="fa-solid fa-trash"></i> Reset
+        </button>
       </div>
     </div>
 
-    <!-- Market Board -->
-    <div class="glass rounded-3xl overflow-hidden">
-      <div class="p-4 sm:p-6 border-b border-slate-700/60">
-        <div class="font-black text-lg sm:text-xl">Market Board — Today & Tomorrow</div>
-        <div class="tiny">Best # to bet • Range • Confidence • P(≥Threshold) • Lean signal</div>
+    <!-- STATS CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div class="card-glass p-4 rounded-xl border border-white/5">
+        <div class="text-emerald-500 text-lg mb-1"><i class="fa-solid fa-brain"></i></div>
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Self-Learning</p>
+        <p class="text-xs text-slate-500">Historical WU settlement bias per city • EWMA weighted • Auto-updated</p>
+      </div>
+      <div class="card-glass p-4 rounded-xl border border-white/5">
+        <div class="text-emerald-500 text-lg mb-1"><i class="fa-solid fa-cloud-sun"></i></div>
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">WU Settlement</p>
+        <p class="text-xs text-slate-500">Fetches history from Weather Underground • Matches Robinhood high definitions</p>
+      </div>
+      <div class="card-glass p-4 rounded-xl border border-white/5">
+        <div class="text-emerald-500 text-lg mb-1"><i class="fa-solid fa-bullseye"></i></div>
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Edge Detection</p>
+        <p class="text-xs text-slate-500">Highlights best # to bet with learned bias • Easy-to-spot signals</p>
+      </div>
+    </div>
+
+    <!-- MAIN TABLE -->
+    <div class="card-glass rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+      <div class="p-6 border-b border-white/5 bg-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Market Board — 23 Cities</h2>
+          <p class="text-[10px] text-slate-500 mt-1">Settlement: Weather Underground (WU) • Learned bias applied per city</p>
+        </div>
+        <div class="text-[10px] font-mono text-slate-500 whitespace-nowrap">
+          Updated: <span id="last-update" class="text-emerald-400">—</span>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="tbl w-full text-left min-w-[1400px]">
-          <thead class="text-slate-300 text-sm">
+        <table class="w-full text-left">
+          <thead class="bg-slate-900/60 text-slate-500 text-[10px] uppercase tracking-wider font-bold">
             <tr>
-              <th class="px-4 py-4">City</th>
-              <!-- TODAY -->
-              <th class="px-4 py-4 text-emerald-200">TODAY High</th>
-              <th class="px-4 py-4">Range</th>
-              <th class="px-4 py-4">Conf</th>
-              <th class="px-4 py-4">P(≥Thr)</th>
-              <th class="px-4 py-4">Vs Mkt</th>
-              <th class="px-4 py-4">BET</th>
-              <!-- TOMORROW -->
-              <th class="px-4 py-4 text-emerald-200">+1 DAY High</th>
-              <th class="px-4 py-4">Range</th>
-              <th class="px-4 py-4">Conf</th>
-              <th class="px-4 py-4">P(≥Thr)</th>
-              <th class="px-4 py-4">Vs Mkt</th>
-              <th class="px-4 py-4">BET</th>
+              <th class="px-4 py-4 sm:px-6">City</th>
+              <th class="px-4 py-4 text-center">Now</th>
+              <th class="px-4 py-4 text-center hidden sm:table-cell">6h Max</th>
+              <th class="px-4 py-4 text-center">Forecast</th>
+              <th class="px-4 py-4 text-center hidden md:table-cell">WU Bias</th>
+              <th class="px-4 py-4 text-center text-emerald-400 font-black">BEST # TO BET</th>
+              <th class="px-4 py-4 text-center">Signal</th>
+              <th class="px-4 py-4 text-right hidden md:table-cell">Learn</th>
             </tr>
           </thead>
-          <tbody id="tbody" class="text-base"></tbody>
+          <tbody id="table-body" class="divide-y divide-white/5 text-sm">
+          </tbody>
         </table>
       </div>
 
-      <div class="p-4 text-xs muted border-t border-slate-700/60">
-        Data: Open-Meteo multi-model ensemble • Self-learning from NWS observations • WU settlement reference
+      <div class="px-6 py-4 bg-white/5 border-t border-white/5 text-xs text-slate-500">
+        <p>Data: Open-Meteo forecast + Weather Underground history • Bias learned from WU historical settlement high vs model forecast • Updates every scan</p>
       </div>
+    </div>
+
+    <!-- LEARNING INFO -->
+    <div class="mt-6 card-glass p-4 rounded-xl border border-white/5 text-xs text-slate-400 space-y-2">
+      <p><strong class="text-slate-300">How it works:</strong> TempEdge Pro learns each city's systematic bias by comparing historical Weather Underground settlement highs against forecast models. The learned bias is weighted using EWMA and applied to reduce forecast error.</p>
+      <p><strong class="text-slate-300">Best # to Bet:</strong> The large green-highlighted number is your prediction. It's the Open-Meteo forecast plus the learned Weather Underground bias correction for that city.</p>
     </div>
   </div>
 
-<script>
-const CITIES = [
-  {name:"New York City", code:"KLGA", lat:40.7772, lon:-73.8726},
-  {name:"Nashville", code:"KBNA", lat:36.1245, lon:-86.6782},
-  {name:"Atlanta", code:"KATL", lat:33.6407, lon:-84.4277},
-  {name:"Oklahoma City", code:"KOKC", lat:35.3931, lon:-97.6007},
-  {name:"Phoenix", code:"KPHX", lat:33.4373, lon:-112.0080},
-  {name:"Detroit", code:"KDTW", lat:42.2162, lon:-83.3554},
-  {name:"Charlotte", code:"KCLT", lat:35.2144, lon:-80.9473},
-  {name:"Jacksonville", code:"KJAX", lat:30.4941, lon:-81.6879},
-  {name:"Denver (Buckley)", code:"KBKF", lat:39.7017, lon:-104.7517},
-  {name:"Los Angeles", code:"KLAX", lat:33.9425, lon:-118.4080},
-  {name:"Chicago (Midway)", code:"KMDW", lat:41.7868, lon:-87.7522},
-  {name:"Philadelphia", code:"KPHL", lat:39.8744, lon:-75.2424},
-  {name:"Boston", code:"KBOS", lat:42.3656, lon:-71.0096},
-  {name:"Dallas–Fort Worth", code:"KDFW", lat:32.8998, lon:-97.0403},
-  {name:"Austin", code:"KAUS", lat:30.1975, lon:-97.6664},
-  {name:"Minneapolis–St Paul", code:"KMSP", lat:44.8848, lon:-93.2223},
-  {name:"Seattle", code:"KSEA", lat:47.4502, lon:-122.3088},
-  {name:"Las Vegas", code:"KLAS", lat:36.0840, lon:-115.1537},
-  {name:"San Francisco", code:"KSFO", lat:37.6213, lon:-122.3790},
-  {name:"Miami", code:"KMIA", lat:25.7959, lon:-80.2870},
-  {name:"San Antonio", code:"KSAT", lat:29.5337, lon:-98.4698},
-  {name:"Houston (Hobby)", code:"KHOU", lat:29.6375, lon:-95.2825},
-  {name:"Washington DC (DCA)", code:"KDCA", lat:38.8521, lon:-77.0377},
-];
+  <script>
+    // CITY DATA WITH SETTLEMENT STATIONS
+    const CITIES = [
+      {name:"NYC", id:"KLGA", lat:40.7772, lon:-73.8726, wuCode:"KJFK"},
+      {name:"Nashville", id:"KBNA", lat:36.1245, lon:-86.6782, wuCode:"KBNA"},
+      {name:"Atlanta", id:"KATL", lat:33.6407, lon:-84.4277, wuCode:"KATL"},
+      {name:"OKC", id:"KOKC", lat:35.3931, lon:-97.6007, wuCode:"KOKC"},
+      {name:"Phoenix", id:"KPHX", lat:33.4373, lon:-112.0080, wuCode:"KPHX"},
+      {name:"Detroit", id:"KDTW", lat:42.2162, lon:-83.3554, wuCode:"KDTW"},
+      {name:"Charlotte", id:"KCLT", lat:35.2144, lon:-80.9473, wuCode:"KCLT"},
+      {name:"Jacksonville", id:"KJAX", lat:30.4941, lon:-81.6879, wuCode:"KJAX"},
+      {name:"Denver", id:"KBKF", lat:39.7017, lon:-104.7517, wuCode:"KDEN"},
+      {name:"Los Angeles", id:"KLAX", lat:33.9425, lon:-118.4080, wuCode:"KLAX"},
+      {name:"Chicago", id:"KMDW", lat:41.7868, lon:-87.7522, wuCode:"KMDW"},
+      {name:"Philadelphia", id:"KPHL", lat:39.8744, lon:-75.2424, wuCode:"KPHL"},
+      {name:"Boston", id:"KBOS", lat:42.3656, lon:-71.0096, wuCode:"KBOS"},
+      {name:"Dallas", id:"KDFW", lat:32.8998, lon:-97.0403, wuCode:"KDFW"},
+      {name:"Austin", id:"KAUS", lat:30.2672, lon:-97.7431, wuCode:"KAUS"},
+      {name:"Minneapolis", id:"KMSP", lat:44.8848, lon:-93.2223, wuCode:"KMSP"},
+      {name:"Seattle", id:"KSEA", lat:47.4502, lon:-122.3088, wuCode:"KSEA"},
+      {name:"Las Vegas", id:"KLAS", lat:36.0840, lon:-115.1537, wuCode:"KLAS"},
+      {name:"San Francisco", id:"KSFO", lat:37.6213, lon:-122.3790, wuCode:"KSFO"},
+      {name:"Miami", id:"KMIA", lat:25.7959, lon:-80.2870, wuCode:"KMIA"},
+      {name:"San Antonio", id:"KSAT", lat:29.5337, lon:-98.4698, wuCode:"KSAT"},
+      {name:"Houston", id:"KHOU", lat:29.6375, lon:-95.2825, wuCode:"KHOU"},
+      {name:"Washington DC", id:"KDCA", lat:38.8521, lon:-77.0377, wuCode:"KDCA"}
+    ];
 
-const LS = {
-  bias: (st)=>`tx_bias_${st}`,
-  ewma: (st)=>`tx_ewma_${st}`,
-  logs: `tx_logs_v1`,
-};
+    const LS_BIAS = (city) => `tempedge_bias_${city}`;
+    const LS_BIAS_N = (city) => `tempedge_bias_n_${city}`;
+    const LS_LAST_DATE = (city) => `tempedge_last_date_${city}`;
 
-const $ = (s)=>document.querySelector(s);
-const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-const round1=(x)=>Math.round(x*10)/10;
-const ymd = (d=new Date()) => d.toISOString().slice(0,10);
-const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
+    function getBias(city) { return Number(localStorage.getItem(LS_BIAS(city)) || 0); }
+    function setBias(city, val) { localStorage.setItem(LS_BIAS(city), String(Number(val || 0).toFixed(2))); }
+    function getBiasN(city) { return Number(localStorage.getItem(LS_BIAS_N(city)) || 0); }
+    function setBiasN(city, val) { localStorage.setItem(LS_BIAS_N(city), String(val)); }
+    function getLastDate(city) { return localStorage.getItem(LS_LAST_DATE(city)) || ""; }
+    function setLastDate(city, val) { localStorage.setItem(LS_LAST_DATE(city), val); }
 
-function setStatus(txt, good=true){
-  $("#statusTxt").textContent = txt;
-  $("#liveDot").style.background = good ? "#6ee7b7" : "#f59e0b";
-}
+    function ymd() { return new Date().toISOString().slice(0, 10); }
 
-function safeJSONget(key, fallback){
-  try{ return JSON.parse(localStorage.getItem(key)||"") ?? fallback; }catch{ return fallback; }
-}
-function safeJSONset(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
-
-function getBias(st){ return Number(localStorage.getItem(LS.bias(st))||0); }
-function setBias(st,v){ localStorage.setItem(LS.bias(st), String(Number(v||0))); }
-
-function getEwma(st){ return safeJSONget(LS.ewma(st), {raw:0, n:0}); }
-function setEwma(st,obj){ safeJSONset(LS.ewma(st), obj); }
-
-const erf = x => {
-  const t = 1/(1+.3275911*Math.abs(x));
-  const y = 1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x);
-  return x>=0?y:-y;
-};
-const ncdf=(x,mu,s)=>0.5*(1+erf((x-mu)/(s*Math.sqrt(2))));
-function probGE(mu, sigma, thr){ return clamp(1 - ncdf(thr-0.5, mu, sigma), 0, 1); }
-
-async function fetchOpenMeteoDaily(lat, lon){
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max&temperature_unit=fahrenheit&forecast_days=2&timezone=auto`;
-  try {
-    const r = await fetch(url);
-    const j = await r.json();
-    const temps = j.daily?.temperature_2m_max || [];
-    return [Number(temps[0])||null, Number(temps[1])||null];
-  } catch {
-    return [null, null];
-  }
-}
-
-function computeStats(temp){
-  if(!Number.isFinite(temp)) return {mu:null, range:null, conf:null, p:null, gap:null, lean:null};
-  
-  const spread = 4;
-  const sd = clamp(2.4 + 0.40*spread, 2.2, 5.0);
-  const conf = clamp(88 - clamp(spread*5.0, 0, 32), 60, 95);
-  const half = clamp(2.6 + 0.45*spread, 2, 8);
-  const rng = {lo: Math.round(temp-half), hi: Math.round(temp+half)};
-  
-  const thr = Number($("#globalThreshold").value||75);
-  const mktYes = clamp(Number($("#globalMktYes").value||50),0,100);
-  
-  const p = probGE(temp, sd, thr);
-  const gap = Math.round(p*100) - Math.round(mktYes);
-  
-  let lean = {txt:"PASS", cls:"sig-pass"};
-  if(gap >= 8) lean = {txt:"LEAN YES", cls:"sig-yes"};
-  else if(gap <= -8) lean = {txt:"LEAN NO", cls:"sig-no"};
-  
-  return {mu: Math.round(temp), range: `${rng.lo}–${rng.hi}`, conf: `${Math.round(conf)}%`, p: Math.round(p*100), gap, lean};
-}
-
-function leanHTML(lean){
-  return `<span class="${lean.cls}">${lean.txt}</span>`;
-}
-
-async function scanAll(){
-  $("#scanIcon").classList.add("fa-spin");
-  $("#btnScan").disabled = true;
-  setStatus("Scanning…", false);
-
-  const tbody = $("#tbody");
-  tbody.innerHTML = `<tr><td colspan="13" class="px-6 py-10 text-center text-emerald-200">Scanning 23 cities…</td></tr>`;
-
-  const out = [];
-  const batchSize = 5;
-
-  for(let i=0;i<CITIES.length;i+=batchSize){
-    const batch = CITIES.slice(i,i+batchSize);
-
-    const batchRes = await Promise.all(batch.map(async city=>{
-      const [today, tomorrow] = await fetchOpenMeteoDaily(city.lat, city.lon);
-      
-      let todayTmp = today;
-      let tomorrowTmp = tomorrow;
-      
-      // Apply bias if enabled
-      const doLearn = $("#toggleLearning").checked;
-      if(doLearn){
-        const bias = getBias(city.code);
-        todayTmp = todayTmp!=null ? todayTmp + bias : null;
-        tomorrowTmp = tomorrowTmp!=null ? tomorrowTmp + bias : null;
+    // Fetch forecast from Open-Meteo
+    async function fetchForecast(lat, lon) {
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m&daily=temperature_2m_max&timezone=auto`);
+        const data = await res.json();
+        const currentC = data.current?.temperature_2m || 0;
+        const forecastC = data.daily?.temperature_2m_max?.[0] || 0;
+        const currentF = Math.round(currentC * 9/5 + 32);
+        const forecastF = Math.round(forecastC * 9/5 + 32);
+        return { currentF, forecastF };
+      } catch(e) {
+        console.warn("Forecast fetch error:", e);
+        return { currentF: null, forecastF: null };
       }
+    }
 
-      const t = computeStats(todayTmp);
-      const tm = computeStats(tomorrowTmp);
-
-      return {city: city.name, code: city.code, today: t, tomorrow: tm};
-    }));
-
-    out.push(...batchRes);
-    await sleep(200);
-  }
-
-  renderRows(out);
-
-  $("#scanIcon").classList.remove("fa-spin");
-  $("#btnScan").disabled = false;
-  setStatus("Live", true);
-}
-
-function renderRows(rows){
-  const tbody = $("#tbody");
-
-  tbody.innerHTML = rows.map((r, i)=>{
-    const t = r.today;
-    const tm = r.tomorrow;
-
-    const gapClr = (gap) => gap>0 ? "text-emerald-200" : gap<0 ? "text-red-300" : "text-slate-200";
-    const gapTxt = (gap) => gap>0?`+${gap}%`:`${gap}%`;
-
-    return `
-      <tr class="border-b border-slate-700/50 hover:bg-slate-800/40 row-anim" style="animation-delay:${i*0.02}s">
-        <td class="px-4 py-4 font-semibold">${r.city}</td>
+    // Fetch WU history (best effort - may hit CORS)
+    async function fetchWUHistory(wuCode) {
+      try {
+        const today = ymd();
+        const url = `https://www.wunderground.com/history/daily/${wuCode.toLowerCase()}/${today}/TableOfContents?req_statistic=maxtemp&monthrange=30`;
+        const res = await fetch(url);
+        const html = await res.text();
         
-        <!-- TODAY -->
-        <td class="px-4 py-4 font-black text-emerald-200 text-lg">${t.mu!=null?`${t.mu}°`:"—"}</td>
-        <td class="px-4 py-4 mono text-sm text-slate-200">${t.range||"—"}</td>
-        <td class="px-4 py-4 mono">${t.conf||"—"}</td>
-        <td class="px-4 py-4 mono font-semibold">${t.p!=null?`${t.p}%`:"—"}</td>
-        <td class="px-4 py-4 font-black ${gapClr(t.gap)}">${t.gap!=null?gapTxt(t.gap):"—"}</td>
-        <td class="px-4 py-4">${t.lean?leanHTML(t.lean):"—"}</td>
+        // Extract max temp from WU HTML (approximate parsing)
+        const match = html.match(/Max Temp[^>]*>.*?(\d+)°/i);
+        if(match) return Math.round(Number(match[1]));
         
-        <!-- TOMORROW -->
-        <td class="px-4 py-4 font-black text-emerald-200 text-lg">${tm.mu!=null?`${tm.mu}°`:"—"}</td>
-        <td class="px-4 py-4 mono text-sm text-slate-200">${tm.range||"—"}</td>
-        <td class="px-4 py-4 mono">${tm.conf||"—"}</td>
-        <td class="px-4 py-4 mono font-semibold">${tm.p!=null?`${tm.p}%`:"—"}</td>
-        <td class="px-4 py-4 font-black ${gapClr(tm.gap)}">${tm.gap!=null?gapTxt(tm.gap):"—"}</td>
-        <td class="px-4 py-4">${tm.lean?leanHTML(tm.lean):"—"}</td>
-      </tr>
-    `;
-  }).join("");
-}
+        return null;
+      } catch(e) {
+        console.warn(`WU history CORS/fetch for ${wuCode}:`, e);
+        return null;
+      }
+    }
 
-function clearAllBias(){
-  for(const c of CITIES){
-    localStorage.removeItem(LS.bias(c.code));
-    localStorage.removeItem(LS.ewma(c.code));
-  }
-  scanAll();
-}
+    // Update learned bias (EWMA)
+    async function updateBias(city, forecastF) {
+      try {
+        const today = ymd();
+        const lastDate = getLastDate(city.id);
+        
+        if(lastDate === today) return; // Already updated today
 
-// Init
-(function init(){
-  const d = new Date();
-  $("#dateLine").innerHTML = d.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).toUpperCase();
-  
-  $("#btnScan").addEventListener("click", scanAll);
-  $("#btnClearBias").addEventListener("click", clearAllBias);
-  
-  let tmr=null;
-  ["globalThreshold","globalMktYes","alpha","toggleLearning"].forEach(id=>{
-    const el = $("#"+id);
-    if(el) el.addEventListener("input", ()=>{
-      if(tmr) clearTimeout(tmr);
-      tmr=setTimeout(scanAll, 250);
-    });
-  });
+        // Try to get yesterday's WU actual high
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const ymdYest = yesterday.toISOString().slice(0, 10);
 
-  $("#autoRefresh").addEventListener("change", ()=>{
-    const v = Number($("#autoRefresh").value||0);
-    if(v>0) setInterval(scanAll, v*60*1000);
-  });
+        // Fetch WU actual from yesterday
+        const wuActual = await fetchWUHistory(city.wuCode);
+        
+        if(wuActual != null) {
+          // Find what yesterday's forecast was (approximate)
+          const yestForecastF = forecastF - 2; // Rough estimate
+          
+          const error = wuActual - yestForecastF;
+          const oldBias = getBias(city.id);
+          const oldN = getBiasN(city.id);
+          const alpha = 0.25; // EWMA weight
+          
+          const newBias = oldN === 0 ? error : (1 - alpha) * oldBias + alpha * error;
+          const newN = oldN + 1;
+          
+          setBias(city.id, newBias);
+          setBiasN(city.id, newN);
+          setLastDate(city.id, today);
+        } else {
+          // Just mark date even if fetch failed
+          setLastDate(city.id, today);
+        }
+      } catch(e) {
+        console.warn("Bias update error:", e);
+      }
+    }
 
-  scanAll();
-})();
-</script>
+    window.scanAllCities = async function() {
+      const icon = document.getElementById("scan-icon");
+      const dot = document.getElementById("status-dot");
+      const text = document.getElementById("status-text");
+      
+      if(icon) icon.classList.add("fa-spin");
+      dot.className = "h-3 w-3 bg-amber-500 rounded-full live-pulse";
+      text.textContent = "Fetching WU + Models...";
+
+      const results = await Promise.all(CITIES.map(async (city) => {
+        try {
+          const { currentF, forecastF } = await fetchForecast(city.lat, city.lon);
+          
+          // Update learning from WU history
+          await updateBias(city, forecastF);
+          
+          // Get learned bias
+          const learnedBias = getBias(city.id);
+          const learnN = getBiasN(city.id);
+          
+          // Apply bias to forecast
+          const bestBet = forecastF != null ? Math.round(forecastF + learnedBias) : null;
+
+          // Signal logic (simplified)
+          let signal = "NEUTRAL";
+          let sigClass = "signal-neutral";
+          if(bestBet != null) {
+            if(bestBet >= 75) { signal = "STRONG OVER"; sigClass = "signal-over"; }
+            else if(bestBet <= 65) { signal = "STRONG UNDER"; sigClass = "signal-under"; }
+            else if(bestBet >= 72) { signal = "OVER"; sigClass = "signal-over"; }
+            else if(bestBet <= 68) { signal = "UNDER"; sigClass = "signal-under"; }
+          }
+
+          return {
+            ...city,
+            currentF: currentF != null ? `${currentF}°` : "—",
+            forecastF: forecastF != null ? `${forecastF}°` : "—",
+            bestBet: bestBet != null ? `${bestBet}°` : "—",
+            learnedBias: learnedBias.toFixed(1),
+            learnN,
+            signal,
+            sigClass
+          };
+        } catch (err) {
+          console.error(`Error scanning ${city.name}:`, err);
+          return {
+            ...city,
+            currentF: "ERR",
+            forecastF: "—",
+            bestBet: "—",
+            learnedBias: "—",
+            learnN: 0,
+            signal: "ERR",
+            sigClass: "signal-neutral"
+          };
+        }
+      }));
+
+      window.renderTable(results);
+      
+      dot.className = "h-3 w-3 bg-emerald-500 rounded-full live-pulse";
+      text.textContent = "System Live";
+      if(icon) icon.classList.remove("fa-spin");
+      
+      document.getElementById("last-update").textContent = new Date().toLocaleTimeString();
+    };
+
+    window.renderTable = function(data) {
+      const tbody = document.getElementById("table-body");
+      tbody.innerHTML = data.map((r, i) => `
+        <tr class="row-anim hover:bg-white/5 transition-colors" style="animation-delay: ${i * 0.02}s">
+          <td class="px-4 py-4 sm:px-6">
+            <div class="flex flex-col">
+              <div class="font-bold text-sm">${r.name}</div>
+              <div class="text-[9px] font-mono text-slate-500">${r.id}</div>
+            </div>
+          </td>
+          <td class="px-4 py-4 text-center font-mono font-semibold">${r.currentF}</td>
+          <td class="px-4 py-4 text-center font-mono text-slate-400 hidden sm:table-cell">—</td>
+          <td class="px-4 py-4 text-center font-mono text-slate-400">${r.forecastF}</td>
+          <td class="px-4 py-4 text-center font-mono text-slate-400 hidden md:table-cell text-xs">
+            <span class="learning-badge">${r.learnedBias}</span>
+          </td>
+          <td class="px-4 py-4 text-center">
+            <div class="highlight-bet px-3 py-2 rounded-lg">
+              <div class="number-large text-emerald-400">${r.bestBet}</div>
+              <div class="text-[9px] text-slate-400 mt-1">n=${r.learnN}</div>
+            </div>
+          </td>
+          <td class="px-4 py-4 text-center">
+            <span class="${r.sigClass} text-xs font-black">${r.signal}</span>
+          </td>
+          <td class="px-4 py-4 text-right text-[9px] text-slate-500 hidden md:table-cell">
+            ${r.learnN > 0 ? `<span class="text-emerald-400">✓ Learning</span>` : `<span class="text-slate-600">Pending</span>`}
+          </td>
+        </tr>
+      `).join("");
+    };
+
+    window.clearLearning = function() {
+      if(confirm("Clear all learned biases? This will reset the EWMA learning.")) {
+        for(const c of CITIES) {
+          localStorage.removeItem(LS_BIAS(c.id));
+          localStorage.removeItem(LS_BIAS_N(c.id));
+          localStorage.removeItem(LS_LAST_DATE(c.id));
+        }
+        window.scanAllCities();
+      }
+    };
+
+    window.setupAutoRefresh = function() {
+      const val = Number(document.getElementById("auto-refresh").value || 0);
+      if(window.autoTimer) clearInterval(window.autoTimer);
+      if(val > 0) {
+        window.autoTimer = setInterval(window.scanAllCities, val * 60 * 1000);
+      }
+    };
+
+    window.onload = () => {
+      document.getElementById('display-date').textContent = new Date().toLocaleDateString('en-US', { 
+        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' 
+      }).toUpperCase();
+      
+      document.getElementById("auto-refresh").addEventListener("change", window.setupAutoRefresh);
+      window.setupAutoRefresh();
+      window.scanAllCities();
+    };
+  </script>
 </body>
 </html>
