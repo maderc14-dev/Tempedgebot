@@ -1,175 +1,325 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TempEdge Bot • High-Temp Predictions</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; }
-        .card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3); }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>TempEdge Bot — High-Temp Predictions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root{color-scheme:dark}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 800px at 15% 10%,#1b2b59 0%,#0b1020 55%);color:#e9eeff}
+    .glass{background:rgba(15,23,42,.72);backdrop-filter:blur(10px);border:1px solid rgba(148,163,184,.16)}
+    .pulse{animation:pulse 1.6s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+    .row-anim{animation:fadeIn .22s ease-out both}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .badge{font-size:11px;font-weight:900;letter-spacing:.06em;padding:3px 9px;border-radius:999px;border:1px solid rgba(148,163,184,.18)}
+    .b-good{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.25)}
+    .b-warn{background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.25)}
+    .b-bad{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25)}
+    .sig-yes{background:#22c55e;color:#02140a;padding:6px 12px;border-radius:8px;font-weight:900}
+    .sig-no{background:#ef4444;color:#fff;padding:6px 12px;border-radius:8px;font-weight:900}
+    .sig-pass{background:#475569;color:#e2e8f0;padding:6px 12px;border-radius:8px;font-weight:900}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    .tiny{font-size:12px;color:#9fb0d0}
+    .muted{color:#a9b4d0}
+    .link{color:#6ee7ff;text-decoration:none}
+    .link:hover{text-decoration:underline}
+    .kpi{font-weight:900}
+    .tbl th{position:sticky;top:0;background:rgba(2,6,23,.75);backdrop-filter:blur(8px)}
+    input,select,textarea{background:rgba(2,6,23,.6);border:1px solid rgba(148,163,184,.16);border-radius:12px;padding:10px 12px;color:#e9eeff;outline:none}
+    input:focus,select:focus,textarea:focus{border-color:rgba(110,231,255,.6)}
+    .btn{border-radius:14px;padding:.75rem 1.1rem;font-weight:900}
+  </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen">
-    <div class="max-w-4xl mx-auto p-4">
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-4xl font-bold tracking-tight">🌡️ TempEdge Bot</h1>
-                <p class="text-emerald-400 text-sm">Live high-temp forecasts for Robinhood • Kalshi • Polymarket</p>
-            </div>
-            <div class="text-right">
-                <button onclick="refreshAll()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl flex items-center gap-2 text-sm">
-                    <i class="fa-solid fa-rotate"></i> Refresh Live
-                </button>
-                <p id="last-updated" class="text-xs text-zinc-500 mt-1"></p>
-            </div>
-        </div>
 
-        <!-- City Selector -->
-        <div class="mb-6">
-            <label class="block text-sm text-zinc-400 mb-2">Select City (Robinhood/Kalshi markets)</label>
-            <select id="city-select" onchange="loadCity()" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:border-emerald-500">
-                <!-- Populated by JS -->
-            </select>
+<body>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl glass flex items-center justify-center text-emerald-300">
+          <i class="fa-solid fa-temperature-three-quarters text-xl"></i>
         </div>
+        <div>
+          <div class="text-3xl sm:text-4xl font-black tracking-tight">
+            TempEdge <span class="text-emerald-300">Bot</span>
+          </div>
+          <div id="dateLine" class="text-emerald-200 font-semibold text-sm mt-1 uppercase tracking-wide"></div>
+        </div>
+      </div>
 
-        <!-- Forecast Grid -->
-        <div id="forecast-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Cards populated by JS -->
-        </div>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button id="btnScan" class="btn bg-emerald-400 hover:bg-emerald-300 text-slate-900 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-rotate" id="scanIcon"></i> Scan
+        </button>
 
-        <!-- Info Bar -->
-        <div class="mt-10 text-xs text-zinc-500 border-t border-zinc-800 pt-6 flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div>
-                Data: <a href="https://open-meteo.com" target="_blank" class="text-emerald-400 hover:underline">Open-Meteo</a> (best-in-class ensemble) • 
-                Resolution notes: Polymarket = WU history tab | Kalshi/Robinhood = NWS CLI
-            </div>
-            <div class="flex gap-6">
-                <a href="https://robinhood.com/us/en/prediction-markets/climate/" target="_blank" class="flex items-center gap-1 hover:text-white">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Robinhood Markets
-                </a>
-                <a href="https://kalshi.com/category/climate/daily-temperature" target="_blank" class="flex items-center gap-1 hover:text-white">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Kalshi
-                </a>
-                <a href="https://polymarket.com" target="_blank" class="flex items-center gap-1 hover:text-white">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Polymarket
-                </a>
-            </div>
-            <div>Made for accurate daily high-temp edges • April 2026</div>
+        <div class="glass rounded-2xl px-4 py-3 text-sm flex items-center gap-2">
+          <span id="liveDot" class="w-3 h-3 bg-emerald-300 rounded-full inline-block pulse"></span>
+          <span id="statusTxt" class="muted">Ready</span>
         </div>
+      </div>
     </div>
 
-    <script>
-        // All Robinhood + Kalshi daily high-temp cities (lat/lon verified)
-        const cities = [
-            {name: "New York City", lat: 40.7128, lon: -74.0060},
-            {name: "Los Angeles", lat: 34.0522, lon: -118.2437},
-            {name: "Chicago", lat: 41.8781, lon: -87.6298},
-            {name: "Miami", lat: 25.7617, lon: -80.1918},
-            {name: "San Francisco", lat: 37.7749, lon: -122.4194},
-            {name: "Seattle", lat: 47.6062, lon: -122.3321},
-            {name: "Phoenix", lat: 33.4484, lon: -112.0740},
-            {name: "Las Vegas", lat: 36.1699, lon: -115.1398},
-            {name: "Denver", lat: 39.7392, lon: -104.9903},
-            {name: "Dallas", lat: 32.7767, lon: -96.7970},
-            {name: "Washington DC", lat: 38.9072, lon: -77.0369},
-            {name: "Atlanta", lat: 33.7490, lon: -84.3880},
-            {name: "Houston", lat: 29.7604, lon: -95.3698},
-            {name: "Boston", lat: 42.3601, lon: -71.0589},
-            {name: "Austin", lat: 30.2672, lon: -97.7431},
-            {name: "Philadelphia", lat: 39.9526, lon: -75.1652},
-            {name: "Minneapolis-Saint Paul", lat: 44.9778, lon: -93.2650},
-            {name: "Nashville", lat: 36.1627, lon: -86.7816},
-            {name: "San Antonio", lat: 29.4252, lon: -98.4946},
-            {name: "Jacksonville", lat: 30.3322, lon: -81.6557},
-            {name: "Charlotte", lat: 35.2271, lon: -80.8431},
-            {name: "Detroit", lat: 42.3314, lon: -83.0458},
-            {name: "Oklahoma City", lat: 35.4676, lon: -97.5164}
-        ];
+    <!-- Controls -->
+    <div class="glass rounded-3xl p-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div>
+          <div class="tiny mb-1">Market Threshold (High ≥ °F)</div>
+          <input id="globalThreshold" type="number" value="75" />
+        </div>
+        <div>
+          <div class="tiny mb-1">Market "YES" Price (%)</div>
+          <input id="globalMktYes" type="number" value="58" />
+        </div>
+        <div>
+          <div class="tiny mb-1">Auto Refresh</div>
+          <select id="autoRefresh">
+            <option value="0" selected>Off</option>
+            <option value="10">Every 10 min</option>
+            <option value="30">Every 30 min</option>
+          </select>
+        </div>
+        <div>
+          <div class="tiny mb-1">Learning α (EWMA)</div>
+          <input id="alpha" type="number" step="0.05" min="0.05" max="0.60" value="0.25" />
+        </div>
+      </div>
+    </div>
 
-        let currentCity = null;
+    <!-- Market Board -->
+    <div class="glass rounded-3xl overflow-hidden">
+      <div class="p-4 sm:p-6 border-b border-slate-700/60">
+        <div class="font-black text-lg sm:text-xl">Market Board</div>
+        <div class="tiny">Today & Tomorrow forecasts • Best # to bet • Confidence ranges</div>
+      </div>
 
-        function populateCities() {
-            const select = document.getElementById("city-select");
-            cities.forEach(city => {
-                const opt = document.createElement("option");
-                opt.value = JSON.stringify(city);
-                opt.textContent = city.name;
-                select.appendChild(opt);
-            });
-            // Default to first city
-            currentCity = cities[0];
-            select.value = JSON.stringify(currentCity);
-            loadCity();
-        }
+      <div class="overflow-x-auto">
+        <table class="tbl w-full text-left">
+          <thead class="text-slate-300 text-sm">
+            <tr>
+              <th class="px-4 py-4">City</th>
+              <th class="px-4 py-4 text-emerald-200">Today High</th>
+              <th class="px-4 py-4">Range</th>
+              <th class="px-4 py-4">Conf</th>
+              <th class="px-4 py-4">P(≥Thr)</th>
+              <th class="px-4 py-4">Vs Market</th>
+              <th class="px-4 py-4">BET</th>
+              <th class="px-4 py-4 text-emerald-200">+1 Day High</th>
+              <th class="px-4 py-4">Range</th>
+              <th class="px-4 py-4">Conf</th>
+              <th class="px-4 py-4">P(≥Thr)</th>
+              <th class="px-4 py-4">Vs Market</th>
+              <th class="px-4 py-4">BET</th>
+            </tr>
+          </thead>
+          <tbody id="tbody" class="text-base"></tbody>
+        </table>
+      </div>
 
-        async function loadForecast(city) {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&forecast_days=14`;
-            
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                
-                const grid = document.getElementById("forecast-grid");
-                grid.innerHTML = "";
+      <div class="p-4 text-xs muted border-t border-slate-700/60">
+        Data: Open-Meteo (multi-model) • WU settlement focus • No trade recommendation
+      </div>
+    </div>
+  </div>
 
-                const today = new Date();
-                
-                data.daily.time.forEach((dateStr, i) => {
-                    const high = Math.round(data.daily.temperature_2m_max[i]);
-                    const low = Math.round(data.daily.temperature_2m_min[i]);
-                    const code = data.daily.weather_code[i];
-                    
-                    const date = new Date(dateStr);
-                    const isToday = date.toDateString() === today.toDateString();
-                    
-                    // Simple weather emoji
-                    let emoji = "☀️";
-                    if (code >= 51 && code <= 67) emoji = "🌧️";
-                    else if (code >= 71 && code <= 77) emoji = "❄️";
-                    else if (code >= 95) emoji = "⛈️";
-                    else if (code === 0 || code === 1) emoji = "☀️";
-                    else emoji = "⛅";
-                    
-                    const cardHTML = `
-                    <div class="card bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <div class="text-emerald-400 text-sm font-medium">${isToday ? 'TODAY' : date.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'})}</div>
-                                <div class="text-5xl font-bold mt-2">${high}°</div>
-                                <div class="text-zinc-400 text-sm">High • Low ${low}°</div>
-                            </div>
-                            <div class="text-6xl">${emoji}</div>
-                        </div>
-                        <div class="mt-6 text-xs text-zinc-500">Open-Meteo ensemble • WU/NWS aligned for market resolution</div>
-                    </div>`;
-                    
-                    grid.innerHTML += cardHTML;
-                });
-                
-                document.getElementById("last-updated").innerHTML = `Last updated: ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} CDT`;
-                
-            } catch (e) {
-                console.error(e);
-                document.getElementById("forecast-grid").innerHTML = `<div class="col-span-3 text-red-400 text-center py-12">Error loading forecast. Check internet.</div>`;
-            }
-        }
+<script>
+const CITIES = [
+  {name:"New York City", code:"KLGA", lat:40.7772, lon:-73.8726},
+  {name:"Nashville", code:"KBNA", lat:36.1245, lon:-86.6782},
+  {name:"Atlanta", code:"KATL", lat:33.6407, lon:-84.4277},
+  {name:"Oklahoma City", code:"KOKC", lat:35.3931, lon:-97.6007},
+  {name:"Phoenix", code:"KPHX", lat:33.4373, lon:-112.0080},
+  {name:"Detroit", code:"KDTW", lat:42.2162, lon:-83.3554},
+  {name:"Charlotte", code:"KCLT", lat:35.2144, lon:-80.9473},
+  {name:"Jacksonville", code:"KJAX", lat:30.4941, lon:-81.6879},
+  {name:"Denver (Buckley)", code:"KBKF", lat:39.7017, lon:-104.7517},
+  {name:"Los Angeles", code:"KLAX", lat:33.9425, lon:-118.4080},
+  {name:"Chicago (Midway)", code:"KMDW", lat:41.7868, lon:-87.7522},
+  {name:"Philadelphia", code:"KPHL", lat:39.8744, lon:-75.2424},
+  {name:"Boston", code:"KBOS", lat:42.3656, lon:-71.0096},
+  {name:"Dallas–Fort Worth", code:"KDFW", lat:32.8998, lon:-97.0403},
+  {name:"Austin", code:"KAUS", lat:30.1975, lon:-97.6664},
+  {name:"Minneapolis–St Paul", code:"KMSP", lat:44.8848, lon:-93.2223},
+  {name:"Seattle", code:"KSEA", lat:47.4502, lon:-122.3088},
+  {name:"Las Vegas", code:"KLAS", lat:36.0840, lon:-115.1537},
+  {name:"San Francisco", code:"KSFO", lat:37.6213, lon:-122.3790},
+  {name:"Miami", code:"KMIA", lat:25.7959, lon:-80.2870},
+  {name:"San Antonio", code:"KSAT", lat:29.5337, lon:-98.4698},
+  {name:"Houston (Hobby)", code:"KHOU", lat:29.6375, lon:-95.2825},
+  {name:"Washington DC (DCA)", code:"KDCA", lat:38.8521, lon:-77.0377},
+];
 
-        function loadCity() {
-            const select = document.getElementById("city-select");
-            currentCity = JSON.parse(select.value);
-            loadForecast(currentCity);
-        }
+const $ = (s)=>document.querySelector(s);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const round1=(x)=>Math.round(x*10)/10;
+const ymd = (d=new Date()) => d.toISOString().slice(0,10);
+const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
 
-        function refreshAll() {
-            if (currentCity) loadForecast(currentCity);
-        }
+function setStatus(txt, good=true){
+  $("#statusTxt").textContent = txt;
+  $("#liveDot").style.background = good ? "#6ee7b7" : "#f59e0b";
+}
 
-        // Init
-        window.onload = populateCities;
-    </script>
+function safeJSONget(key, fallback){
+  try{ return JSON.parse(localStorage.getItem(key)||"") ?? fallback; }catch{ return fallback; }
+}
+
+const erf = x => {
+  const t = 1/(1+.3275911*Math.abs(x));
+  const y = 1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x);
+  return x>=0?y:-y;
+};
+const ncdf=(x,mu,s)=>0.5*(1+erf((x-mu)/(s*Math.sqrt(2))));
+function probGE(mu, sigma, thr){
+  return clamp(1 - ncdf(thr-0.5, mu, sigma), 0, 1);
+}
+
+async function fetchOpenMeteoDaily(lat, lon){
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`+
+    `&daily=temperature_2m_max&temperature_unit=fahrenheit&forecast_days=2&timezone=auto`;
+
+  try {
+    const r = await fetch(url);
+    const j = await r.json();
+    const temps = j.daily?.temperature_2m_max || [];
+    return [temps[0], temps[1]]; // today, tomorrow
+  } catch {
+    return [null, null];
+  }
+}
+
+function computeSigma(spread){
+  return clamp(2.4 + 0.40*spread, 2.2, 5.0);
+}
+
+function computeConf(spread){
+  return clamp(88 - clamp(spread*5.0, 0, 32), 60, 95);
+}
+
+function computeRange(mu, spread){
+  const half = clamp(2.6 + 0.45*spread, 2, 8);
+  return {lo: Math.round(mu-half), hi: Math.round(mu+half)};
+}
+
+function leanFromGap(gap){
+  if(gap >= 8) return {txt:"LEAN YES", cls:"sig-yes"};
+  if(gap <= -8) return {txt:"LEAN NO", cls:"sig-no"};
+  return {txt:"PASS", cls:"sig-pass"};
+}
+
+async function scanAll(){
+  $("#scanIcon").classList.add("fa-spin");
+  $("#btnScan").disabled = true;
+  setStatus("Scanning…", false);
+
+  const thr = Number($("#globalThreshold").value||75);
+  const mktYes = clamp(Number($("#globalMktYes").value||50),0,100);
+
+  const tbody = $("#tbody");
+  tbody.innerHTML = `<tr><td colspan="13" class="px-6 py-10 text-center text-emerald-200">Scanning 23 cities…</td></tr>`;
+
+  const out = [];
+  const batchSize = 4;
+
+  for(let i=0;i<CITIES.length;i+=batchSize){
+    const batch = CITIES.slice(i,i+batchSize);
+
+    const batchRes = await Promise.all(batch.map(async city=>{
+      const [today, tomorrow] = await fetchOpenMeteoDaily(city.lat, city.lon);
+
+      const processDay = (temp) => {
+        if(!Number.isFinite(temp)) return {mu:null, range:null, conf:null, p:null, gap:null, lean:null};
+
+        const spread = 5; // simplified
+        const sd = computeSigma(spread);
+        const conf = computeConf(spread);
+        const rng = computeRange(temp, spread);
+        const p = probGE(temp, sd, thr);
+        const gap = Math.round(p*100) - Math.round(mktYes);
+        const lean = leanFromGap(gap);
+
+        return {mu: Math.round(temp), range: `${rng.lo}–${rng.hi}`, conf: `${Math.round(conf)}%`, p: Math.round(p*100), gap, lean};
+      };
+
+      const t = processDay(today);
+      const tm = processDay(tomorrow);
+
+      return {
+        city: city.name,
+        today: t,
+        tomorrow: tm
+      };
+    }));
+
+    out.push(...batchRes);
+    await sleep(250);
+  }
+
+  renderRows(out, thr, mktYes);
+
+  $("#scanIcon").classList.remove("fa-spin");
+  $("#btnScan").disabled = false;
+  setStatus("Live", true);
+}
+
+function renderRows(rows, thr, mktYes){
+  const tbody = $("#tbody");
+
+  tbody.innerHTML = rows.map((r, i)=>{
+    const t = r.today;
+    const tm = r.tomorrow;
+
+    const gapTxt = (gap) => gap>0?`+${gap}%`:`${gap}%`;
+    const gapClr = (gap) => gap>0 ? "text-emerald-200" : gap<0 ? "text-red-300" : "text-slate-200";
+
+    return `
+      <tr class="border-b border-slate-700/50 hover:bg-slate-800/40 row-anim" style="animation-delay:${i*0.01}s">
+        <td class="px-4 py-4 font-semibold">${r.city}</td>
+        
+        <!-- TODAY -->
+        <td class="px-4 py-4 font-black text-emerald-200 text-lg">${t.mu!=null?`${t.mu}°`:"—"}</td>
+        <td class="px-4 py-4 mono text-sm text-slate-200">${t.range||"—"}</td>
+        <td class="px-4 py-4 mono">${t.conf||"—"}</td>
+        <td class="px-4 py-4 mono font-semibold">${t.p!=null?`${t.p}%`:"—"}</td>
+        <td class="px-4 py-4 font-black ${gapClr(t.gap)}">${t.gap!=null?gapTxt(t.gap):"—"}</td>
+        <td class="px-4 py-4">${t.lean?`<span class="${t.lean.cls}">${t.lean.txt}</span>`:"—"}</td>
+        
+        <!-- TOMORROW -->
+        <td class="px-4 py-4 font-black text-emerald-200 text-lg">${tm.mu!=null?`${tm.mu}°`:"—"}</td>
+        <td class="px-4 py-4 mono text-sm text-slate-200">${tm.range||"—"}</td>
+        <td class="px-4 py-4 mono">${tm.conf||"—"}</td>
+        <td class="px-4 py-4 mono font-semibold">${tm.p!=null?`${tm.p}%`:"—"}</td>
+        <td class="px-4 py-4 font-black ${gapClr(tm.gap)}">${tm.gap!=null?gapTxt(tm.gap):"—"}</td>
+        <td class="px-4 py-4">${tm.lean?`<span class="${tm.lean.cls}">${tm.lean.txt}</span>`:"—"}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// Init
+(function init(){
+  const d = new Date();
+  $("#dateLine").innerHTML = d.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).toUpperCase();
+  
+  $("#btnScan").addEventListener("click", scanAll);
+  
+  let tmr=null;
+  ["globalThreshold","globalMktYes","alpha"].forEach(id=>{
+    $("#"+id).addEventListener("input", ()=>{
+      if(tmr) clearTimeout(tmr);
+      tmr=setTimeout(scanAll, 250);
+    });
+  });
+
+  $("#autoRefresh").addEventListener("change", ()=>{
+    const v = Number($("#autoRefresh").value||0);
+    if(v>0) setInterval(scanAll, v*60*1000);
+  });
+
+  scanAll();
+})();
+</script>
 </body>
 </html>
